@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSalaryContext } from '../../context/SalaryContext';
+import { useToastContext } from '../../context/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePagination } from '../../hooks/usePagination';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -11,14 +12,17 @@ import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import SalarySlipPreview from './SalarySlipPreview';
+import { downloadSalarySlipPdf } from '../../utils/pdfDownload';
 import { useEmployeeContext } from '../../context/EmployeeContext';
-import { IoEyeOutline, IoPrintOutline } from 'react-icons/io5';
+import { IoEyeOutline, IoPrintOutline, IoDownloadOutline } from 'react-icons/io5';
 
 const SalaryHistory = () => {
   const { salarySlips } = useSalaryContext();
   const { employees } = useEmployeeContext();
+  const { addToast } = useToastContext();
   const [search, setSearch] = useState('');
   const [viewSlip, setViewSlip] = useState(null);
+  const [downloading, setDownloading] = useState(false);
   const debouncedSearch = useDebounce(search);
 
   const filtered = useMemo(() => {
@@ -42,6 +46,22 @@ const SalaryHistory = () => {
   const viewEmployee = viewSlip
     ? employees.find((e) => e.employeeId === viewSlip.employeeId)
     : null;
+
+  const handleDownloadPdf = async () => {
+    if (!viewSlip) return;
+    setDownloading(true);
+    try {
+      await downloadSalarySlipPdf(
+        'salary-slip-print',
+        `salary-slip-${viewSlip.employeeId}-${viewSlip.slipId}.pdf`
+      );
+      addToast('PDF downloaded successfully', 'success');
+    } catch {
+      addToast('Failed to download PDF', 'error');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const columns = [
     { key: 'slipId', label: 'Slip ID' },
@@ -110,6 +130,9 @@ const SalaryHistory = () => {
           <>
             <SalarySlipPreview slip={viewSlip} employee={viewEmployee} />
             <div className="flex justify-end gap-3 mt-6 no-print">
+              <Button variant="outline" icon={<IoDownloadOutline />} loading={downloading} onClick={handleDownloadPdf}>
+                Download PDF
+              </Button>
               <Button variant="outline" icon={<IoPrintOutline />} onClick={() => window.print()}>
                 Print
               </Button>

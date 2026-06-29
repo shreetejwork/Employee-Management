@@ -11,7 +11,8 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
 import SalarySlipPreview from './SalarySlipPreview';
-import { IoEyeOutline, IoPrintOutline, IoDocumentTextOutline } from 'react-icons/io5';
+import { downloadSalarySlipPdf } from '../../utils/pdfDownload';
+import { IoEyeOutline, IoPrintOutline, IoDocumentTextOutline, IoDownloadOutline } from 'react-icons/io5';
 
 const GenerateSalarySlip = () => {
   const { employees } = useEmployeeContext();
@@ -22,6 +23,7 @@ const GenerateSalarySlip = () => {
   const [preview, setPreview] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const activeEmployees = useMemo(
     () => employees.filter((e) => e.status === 'Active'),
@@ -124,6 +126,20 @@ const GenerateSalarySlip = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const slipId = preview?.slipId || 'PREVIEW';
+      const employeeId = selectedEmployee?.employeeId || 'employee';
+      await downloadSalarySlipPdf('salary-slip-print', `salary-slip-${employeeId}-${slipId}.pdf`);
+      addToast('PDF downloaded successfully', 'success');
+    } catch {
+      addToast('Failed to download PDF', 'error');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const liveCalc = selectedEmployee ? calculatePreview(formValues, selectedEmployee) : null;
@@ -244,6 +260,9 @@ const GenerateSalarySlip = () => {
       <Modal isOpen={showPreview} onClose={() => setShowPreview(false)} title="Salary Slip Preview" size="lg">
         <SalarySlipPreview slip={preview} employee={selectedEmployee} />
         <div className="flex justify-end gap-3 mt-6 no-print">
+          <Button variant="outline" icon={<IoDownloadOutline />} loading={downloading} onClick={handleDownloadPdf}>
+            Download PDF
+          </Button>
           <Button variant="outline" icon={<IoPrintOutline />} onClick={handlePrint}>
             Print
           </Button>

@@ -1,8 +1,11 @@
-import { COMPANY } from "../../constants/company";
+import { useCompanyContext } from "../../context/CompanyContext";
 import CompanyLogo from "../ui/CompanyLogo";
 
 /** Official letterhead block — salary slips & printable documents */
-const CompanyLetterhead = ({ compact = false, showTagline = true }) => (
+const CompanyLetterhead = ({ compact = false, showTagline = true }) => {
+  const { companyInfo } = useCompanyContext();
+
+  return (
   <div className="border-b-2 border-primary pb-4 mb-4">
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-center gap-4 min-w-0">
@@ -13,12 +16,12 @@ const CompanyLetterhead = ({ compact = false, showTagline = true }) => (
         />
         <div className="min-w-0">
           <h2 className="text-3xl font-bold text-primary leading-tight">
-            {COMPANY.name}
+            {companyInfo.name}
           </h2>
           <p className="text-[11px] text-text-secondary mt-1">
-            <div>{COMPANY.website}</div>
+            <div>{companyInfo.website}</div>
 
-            <div>{COMPANY.email}</div>
+            <div>{companyInfo.email}</div>
           </p>
         </div>
       </div>
@@ -26,13 +29,14 @@ const CompanyLetterhead = ({ compact = false, showTagline = true }) => (
 
     <div className="mt-3 pt-3 border-t border-border/60 space-y-1">
       <p className="text-[10px] text-text-secondary leading-relaxed">
-        {COMPANY.registeredOffice}
+        {companyInfo.registeredOffice}
       </p>
       <p className="text-[10px] text-text-secondary leading-relaxed">
-        {COMPANY.manufacturingUnit}
+        {companyInfo.manufacturingUnit}
       </p>
     </div>
   </div>
-);
+  );
+};
 
 export default CompanyLetterhead;

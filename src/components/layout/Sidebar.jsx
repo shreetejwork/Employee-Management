@@ -6,6 +6,7 @@ import {
   IoWalletOutline,
   IoCalendarOutline,
   IoBarChartOutline,
+  IoSettingsOutline,
   IoLogOutOutline,
   IoChevronBack,
   IoChevronForward,
@@ -21,6 +22,7 @@ const menuItems = [
   { path: ROUTES.SALARY, label: "Salary Slips", icon: IoWalletOutline },
   { path: ROUTES.LEAVES, label: "Leaves", icon: IoCalendarOutline },
   { path: ROUTES.REPORTS, label: "Reports", icon: IoBarChartOutline },
+  { path: ROUTES.SETTINGS, label: "Settings", icon: IoSettingsOutline },
 ];
 
 const Sidebar = ({ collapsed, onToggle }) => {

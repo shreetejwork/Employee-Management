@@ -19,7 +19,7 @@ export const leaveService = {
       department: employee.department,
       ...leaveData,
       days,
-      status: 'Pending',
+      status: 'Approved',
       createdAt: new Date().toISOString(),
     };
     return newLeave;

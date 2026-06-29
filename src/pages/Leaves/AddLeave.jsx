@@ -42,17 +42,17 @@ const AddLeave = () => {
     setSubmitting(true);
     try {
       await addLeave(data, employee);
-      addToast('Leave request submitted successfully!', 'success');
+      addToast('Leave added successfully!', 'success');
       reset();
     } catch {
-      addToast('Failed to submit leave request', 'error');
+      addToast('Failed to add leave', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Card title="Add Leave Request">
+    <Card title="Add Leave">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-2xl">
         <Select
           label="Employee"
@@ -94,7 +94,7 @@ const AddLeave = () => {
           {...register('reason', { required: 'Reason is required' })}
         />
         <div className="flex gap-3">
-          <Button type="submit" loading={submitting}>Submit Leave Request</Button>
+          <Button type="submit" loading={submitting}>Add Leave</Button>
           <Button type="button" variant="secondary" onClick={() => reset()}>Reset</Button>
         </div>
       </form>

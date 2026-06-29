@@ -16,4 +16,5 @@ export const ROUTES = {
   REPORTS_EMPLOYEE: '/reports/employees',
   REPORTS_SALARY: '/reports/salary',
   REPORTS_LEAVE: '/reports/leaves',
+  SETTINGS: '/settings',
 };

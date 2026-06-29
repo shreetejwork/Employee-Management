@@ -1,4 +1,4 @@
-import { COMPANY } from '../../constants/company';
+import { useCompanyContext } from '../../context/CompanyContext';
 import { formatCurrencyDecimal, formatDays } from '../../utils/formatters';
 import { amountToWords } from '../../utils/numberToWords';
 import CompanyLetterhead from '../../components/ui/CompanyLetterhead';
@@ -24,6 +24,8 @@ const AmountRow = ({ label, amount }) => (
 );
 
 const SalarySlipPreview = ({ slip, employee }) => {
+  const { companyInfo } = useCompanyContext();
+
   if (!slip || !employee) return null;
 
   const earnings = [
@@ -199,7 +201,7 @@ const SalarySlipPreview = ({ slip, employee }) => {
           <div className="h-14" />
           <div className="w-44 border-t border-border pt-2">
             <p className="text-xs font-medium text-text-secondary">Authorized Signature</p>
-            <p className="text-[10px] text-text-secondary mt-1">{COMPANY.name}</p>
+            <p className="text-[10px] text-text-secondary mt-1">{companyInfo.name}</p>
           </div>
         </div>
       </div>

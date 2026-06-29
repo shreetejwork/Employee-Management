@@ -31,10 +31,14 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const changePassword = useCallback(async (oldPassword, newPassword) => {
+    return authService.changePassword(oldPassword, newPassword);
+  }, []);
+
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

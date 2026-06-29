@@ -2,13 +2,11 @@ import { Routes, Route, NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LeaveDashboard from './LeaveDashboard';
 import AddLeave from './AddLeave';
-import LeaveRequests from './LeaveRequests';
 import LeaveHistory from './LeaveHistory';
 
 const tabs = [
   { path: '/leaves', label: 'Dashboard', end: true },
   { path: '/leaves/add', label: 'Add Leave' },
-  { path: '/leaves/requests', label: 'Leave Requests' },
   { path: '/leaves/history', label: 'Leave History' },
 ];
 
@@ -16,7 +14,7 @@ const LeavesPage = () => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
     <div>
       <h1 className="text-2xl font-bold text-text">Leave Management</h1>
-      <p className="text-text-secondary text-sm mt-1">Manage employee leave requests and history</p>
+      <p className="text-text-secondary text-sm mt-1">Add and manage employee leave records</p>
     </div>
 
     <div className="flex gap-1 border-b border-border overflow-x-auto">
@@ -41,7 +39,6 @@ const LeavesPage = () => (
     <Routes>
       <Route index element={<LeaveDashboard />} />
       <Route path="add" element={<AddLeave />} />
-      <Route path="requests" element={<LeaveRequests />} />
       <Route path="history" element={<LeaveHistory />} />
     </Routes>
   </motion.div>

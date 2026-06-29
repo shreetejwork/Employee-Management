@@ -3,7 +3,7 @@ import { useLeaveContext } from '../../context/LeaveContext';
 import { IoCalendarOutline, IoTimeOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
 import StatCard from '../../components/ui/StatCard';
 import Card from '../../components/ui/Card';
-import LeaveRequests from './LeaveRequests';
+import RecentLeaves from './RecentLeaves';
 
 const LeaveDashboard = () => {
   const { leaves } = useLeaveContext();
@@ -24,8 +24,8 @@ const LeaveDashboard = () => {
         <StatCard title="Rejected" value={stats.rejected} icon={<IoCalendarOutline size={22} />} color="danger" />
       </div>
 
-      <Card title="Recent Leave Requests" noPadding>
-        <LeaveRequests />
+      <Card title="Recent Leaves" noPadding>
+        <RecentLeaves />
       </Card>
     </div>
   );

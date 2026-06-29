@@ -46,9 +46,31 @@ body {
 }
 
 @media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #salary-slip-print,
+  #salary-slip-print * {
+    visibility: visible;
+  }
+
+  #salary-slip-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none;
+    border: none;
+    border-radius: 0;
+    padding: 20px;
+    margin: 0;
+  }
+
   .no-print {
     display: none !important;
   }
+
   .print-only {
     display: block !important;
   }

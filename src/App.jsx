@@ -9,6 +9,7 @@ import EmployeesPage from './pages/Employees/EmployeesPage';
 import SalaryPage from './pages/Salary/SalaryPage';
 import LeavesPage from './pages/Leaves/LeavesPage';
 import ReportsPage from './pages/Reports/ReportsPage';
+import SettingsPage from './pages/Settings/SettingsPage';
 import { ROUTES } from './constants/routes';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="salary/*" element={<SalaryPage />} />
             <Route path="leaves/*" element={<LeavesPage />} />
             <Route path="reports/*" element={<ReportsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
         </Routes>
