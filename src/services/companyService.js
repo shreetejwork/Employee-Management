@@ -1,6 +1,5 @@
-import { delay } from '../utils/formatters';
+import { api } from '../utils/api';
 import { COMPANY } from '../constants/company';
-import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '../utils/storage';
 
 const defaultAddresses = {
   registeredOffice: COMPANY.registeredOffice,
@@ -9,22 +8,24 @@ const defaultAddresses = {
 
 export const companyService = {
   getStoredAddresses() {
-    return loadFromStorage(STORAGE_KEYS.COMPANY_ADDRESSES, defaultAddresses);
+    // For synchronous initialization fallback
+    return defaultAddresses;
   },
 
   async getCompanyInfo() {
-    await delay(100);
-    const addresses = this.getStoredAddresses();
-    return { ...COMPANY, ...addresses };
+    try {
+      const res = await api.get('/company');
+      if (res.success && res.data) {
+        return { ...COMPANY, ...res.data };
+      }
+      return { ...COMPANY, ...defaultAddresses };
+    } catch {
+      return { ...COMPANY, ...defaultAddresses };
+    }
   },
 
   async updateAddresses(registeredOffice, manufacturingUnit) {
-    await delay(200);
-    const updated = {
-      registeredOffice: registeredOffice.trim(),
-      manufacturingUnit: manufacturingUnit.trim(),
-    };
-    saveToStorage(STORAGE_KEYS.COMPANY_ADDRESSES, updated);
-    return updated;
+    const res = await api.put('/company/addresses', { registeredOffice, manufacturingUnit });
+    return res.data;
   },
 };

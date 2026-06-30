@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useEmployeeContext } from '../../context/EmployeeContext';
 import { useLeaveContext } from '../../context/LeaveContext';
 import { useToastContext } from '../../context/ToastContext';
 import { LEAVE_TYPES } from '../../constants/formOptions';
 import { calculateLeaveDays } from '../../utils/formatters';
+import { leaveService } from '../../services/leaveService';
 import Card from '../../components/ui/Card';
 import Select from '../../components/ui/Select';
 import Input from '../../components/ui/Input';
@@ -12,22 +13,57 @@ import TextArea from '../../components/ui/TextArea';
 import Button from '../../components/ui/Button';
 
 const AddLeave = () => {
-  const { employees } = useEmployeeContext();
+  const { employees, fetchEmployees } = useEmployeeContext();
   const { addLeave } = useLeaveContext();
   const { addToast } = useToastContext();
   const [submitting, setSubmitting] = useState(false);
+  const [balances, setBalances] = useState([]);
+
+  // Fetch employees on mount
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   const employeeOptions = employees
     .filter((e) => e.status === 'Active')
     .map((e) => ({ value: e.id, label: `${e.employeeId} - ${e.fullName}` }));
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm({
     defaultValues: { employeeId: '', leaveType: '', startDate: '', endDate: '', reason: '' },
   });
 
+  const watchedEmployeeId = watch('employeeId');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const days = startDate && endDate ? calculateLeaveDays(startDate, endDate) : 0;
+
+  // Fetch leave balances when employee selection changes
+  useEffect(() => {
+    if (watchedEmployeeId) {
+      leaveService.getBalances(watchedEmployeeId)
+        .then(data => {
+          setBalances(data);
+          // Reset leave type selection when employee changes
+          setValue('leaveType', '');
+        })
+        .catch(() => {
+          setBalances([]);
+          addToast('Failed to load leave balances for employee', 'error');
+        });
+    } else {
+      setBalances([]);
+    }
+  }, [watchedEmployeeId, setValue, addToast]);
+
+  // Dynamically filter leave types that have remaining balance
+  const filteredLeaveTypes = useMemo(() => {
+    if (!watchedEmployeeId) return [];
+    return LEAVE_TYPES.filter(type => {
+      if (type === 'Unpaid') return true; // Always allow unpaid leaves
+      const bal = balances.find(b => b.leaveType === type);
+      return bal ? bal.remaining > 0 : false;
+    });
+  }, [balances, watchedEmployeeId]);
 
   const onSubmit = async (data) => {
     const employee = employees.find((e) => e.id === data.employeeId);
@@ -64,7 +100,7 @@ const AddLeave = () => {
         <Select
           label="Leave Type"
           required
-          options={LEAVE_TYPES}
+          options={filteredLeaveTypes}
           error={errors.leaveType?.message}
           {...register('leaveType', { required: 'Please select leave type' })}
         />

@@ -1,42 +1,38 @@
-import { delay } from '../utils/formatters';
-import { generateLeaveId } from '../utils/idGenerator';
+import { api } from '../utils/api';
 import { calculateLeaveDays } from '../utils/formatters';
 
 export const leaveService = {
-  async getLeaves(leaves) {
-    await delay(300);
-    return [...leaves];
+  async getLeaves() {
+    const res = await api.get('/leaves');
+    return res.data || [];
   },
 
-  async addLeave(leaves, leaveData, employee) {
-    await delay(400);
+  async getBalances(employeeId) {
+    const res = await api.get(`/leaves/balances/${employeeId}`);
+    return res.data || [];
+  },
+
+  async addLeave(leaveData, employee) {
     const days = calculateLeaveDays(leaveData.startDate, leaveData.endDate);
-    const newLeave = {
-      id: crypto.randomUUID(),
-      leaveId: generateLeaveId(leaves),
-      employeeId: employee.employeeId,
-      employeeName: employee.fullName,
-      department: employee.department,
-      ...leaveData,
+    const payload = {
+      employee_id: employee.id,
+      leaveType: leaveData.leaveType,
+      startDate: leaveData.startDate,
+      endDate: leaveData.endDate,
       days,
-      status: 'Approved',
-      createdAt: new Date().toISOString(),
+      reason: leaveData.reason,
+      status: 'Approved', // Defaults to approved when entered by admin
     };
-    return newLeave;
+    const res = await api.post('/leaves', payload);
+    return res.data;
   },
 
-  async approveLeave(leaves, id) {
-    await delay(300);
-    return leaves.map((l) =>
-      l.id === id ? { ...l, status: 'Approved', updatedAt: new Date().toISOString() } : l
-    );
+  async approveLeave(id) {
+    await api.put(`/leaves/${id}/approve`);
   },
 
-  async rejectLeave(leaves, id) {
-    await delay(300);
-    return leaves.map((l) =>
-      l.id === id ? { ...l, status: 'Rejected', updatedAt: new Date().toISOString() } : l
-    );
+  async rejectLeave(id) {
+    await api.put(`/leaves/${id}/reject`);
   },
 
   filterLeaves(leaves, { search, status, leaveType }) {

@@ -22,7 +22,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 
 const EmployeeList = () => {
-  const { employees, loading, filterEmployees, deleteEmployee } = useEmployeeContext();
+  const { employees, loading, filterEmployees, deleteEmployee, fetchEmployees } = useEmployeeContext();
   const { addToast } = useToastContext();
   const navigate = useNavigate();
 
@@ -36,6 +36,11 @@ const EmployeeList = () => {
   const [deleting, setDeleting] = useState(false);
 
   const debouncedSearch = useDebounce(search);
+
+  // Fetch employees on mount
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   const filtered = useMemo(() => {
     const result = filterEmployees({ search: debouncedSearch, department, status, grade });

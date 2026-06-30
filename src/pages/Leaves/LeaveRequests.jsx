@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLeaveContext } from '../../context/LeaveContext';
 import { useToastContext } from '../../context/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -19,7 +19,7 @@ import { IoCheckmark, IoClose, IoEyeOutline } from 'react-icons/io5';
 const statusVariant = { Pending: 'warning', Approved: 'success', Rejected: 'danger' };
 
 const LeaveRequests = () => {
-  const { leaves, filterLeaves, approveLeave, rejectLeave } = useLeaveContext();
+  const { leaves, filterLeaves, approveLeave, rejectLeave, getLeaves } = useLeaveContext();
   const { addToast } = useToastContext();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -28,6 +28,11 @@ const LeaveRequests = () => {
   const [actionLoading, setActionLoading] = useState(null);
 
   const debouncedSearch = useDebounce(search);
+
+  // Fetch leaves on mount
+  useEffect(() => {
+    getLeaves();
+  }, [getLeaves]);
 
   const filtered = useMemo(
     () => filterLeaves({ search: debouncedSearch, status, leaveType }),

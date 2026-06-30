@@ -1,51 +1,44 @@
-import { delay } from '../utils/formatters';
-import { generateEmployeeId } from '../utils/idGenerator';
+import { api } from '../utils/api';
 
 export const employeeService = {
-  async getEmployees(employees) {
-    await delay(300);
-    return [...employees];
+  async getEmployees(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    if (filters.department) params.append('department', filters.department);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.grade) params.append('grade', filters.grade);
+
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    const res = await api.get(`/employees${queryStr}`);
+    return res.data || [];
   },
 
-  async getEmployee(employees, id) {
-    await delay(200);
-    return employees.find((e) => e.id === id) || null;
+  async getEmployee(id) {
+    const res = await api.get(`/employees/${id}`);
+    return res.data || null;
   },
 
-  async getNextEmployeeId(employees) {
-    await delay(100);
-    return generateEmployeeId(employees);
+  async getNextEmployeeId() {
+    const res = await api.get('/employees/next-id');
+    return res.data;
   },
 
-  async addEmployee(employees, employeeData) {
-    await delay(400);
-    const newEmployee = {
-      ...employeeData,
-      id: crypto.randomUUID(),
-      employeeId: employeeData.employeeId || generateEmployeeId(employees),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return newEmployee;
+  async addEmployee(employeeData) {
+    const res = await api.post('/employees', employeeData);
+    return res.data;
   },
 
-  async updateEmployee(employees, id, employeeData) {
-    await delay(400);
-    const index = employees.findIndex((e) => e.id === id);
-    if (index === -1) return null;
-    return {
-      ...employees[index],
-      ...employeeData,
-      id,
-      updatedAt: new Date().toISOString(),
-    };
+  async updateEmployee(id, employeeData) {
+    const res = await api.put(`/employees/${id}`, employeeData);
+    return res.data;
   },
 
-  async deleteEmployee(employees, id) {
-    await delay(300);
-    return employees.filter((e) => e.id !== id);
+  async deleteEmployee(id) {
+    const res = await api.delete(`/employees/${id}`);
+    return res.success;
   },
 
+  // Client-side helper methods for filtering/sorting
   filterEmployees(employees, { search, department, status, grade }) {
     return employees.filter((emp) => {
       const matchesSearch =

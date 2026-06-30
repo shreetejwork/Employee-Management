@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { COMPANY } from '../constants/company';
 import { companyService } from '../services/companyService';
 
@@ -6,6 +6,18 @@ const CompanyContext = createContext(null);
 
 export const CompanyProvider = ({ children }) => {
   const [addresses, setAddresses] = useState(() => companyService.getStoredAddresses());
+
+  // Load from DB on mount
+  useEffect(() => {
+    companyService.getCompanyInfo().then((info) => {
+      if (info) {
+        setAddresses({
+          registeredOffice: info.registeredOffice,
+          manufacturingUnit: info.manufacturingUnit,
+        });
+      }
+    });
+  }, []);
 
   const updateAddresses = useCallback(async (registeredOffice, manufacturingUnit) => {
     const updated = await companyService.updateAddresses(registeredOffice, manufacturingUnit);

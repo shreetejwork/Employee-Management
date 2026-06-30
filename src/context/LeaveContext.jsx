@@ -10,42 +10,48 @@ export const LeaveProvider = ({ children }) => {
   const getLeaves = useCallback(async () => {
     setLoading(true);
     try {
-      return await leaveService.getLeaves(leaves);
+      const data = await leaveService.getLeaves();
+      setLeaves(data);
+      return data;
     } finally {
       setLoading(false);
     }
-  }, [leaves]);
+  }, []);
 
   const addLeave = useCallback(async (leaveData, employee) => {
     setLoading(true);
     try {
-      const newLeave = await leaveService.addLeave(leaves, leaveData, employee);
-      setLeaves((prev) => [...prev, newLeave]);
+      const newLeave = await leaveService.addLeave(leaveData, employee);
+      setLeaves((prev) => [newLeave, ...prev]);
       return newLeave;
     } finally {
       setLoading(false);
     }
-  }, [leaves]);
+  }, []);
 
   const approveLeave = useCallback(async (id) => {
     setLoading(true);
     try {
-      const updated = await leaveService.approveLeave(leaves, id);
-      setLeaves(updated);
+      await leaveService.approveLeave(id);
+      // Reload leaves list from DB to get updated statuses and balances
+      const data = await leaveService.getLeaves();
+      setLeaves(data);
     } finally {
       setLoading(false);
     }
-  }, [leaves]);
+  }, []);
 
   const rejectLeave = useCallback(async (id) => {
     setLoading(true);
     try {
-      const updated = await leaveService.rejectLeave(leaves, id);
-      setLeaves(updated);
+      await leaveService.rejectLeave(id);
+      // Reload leaves list from DB to get updated statuses and balances
+      const data = await leaveService.getLeaves();
+      setLeaves(data);
     } finally {
       setLoading(false);
     }
-  }, [leaves]);
+  }, []);
 
   const filterLeaves = useCallback((filters) => {
     return leaveService.filterLeaves(leaves, filters);

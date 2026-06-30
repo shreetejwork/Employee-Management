@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useLeaveContext } from '../../context/LeaveContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePagination } from '../../hooks/usePagination';
@@ -9,14 +9,17 @@ import SearchInput from '../../components/ui/SearchInput';
 import Badge from '../../components/ui/Badge';
 import Pagination from '../../components/ui/Pagination';
 import EmptyState from '../../components/ui/EmptyState';
-import { useState } from 'react';
 
 const statusVariant = { Pending: 'warning', Approved: 'success', Rejected: 'danger' };
 
 const LeaveHistory = () => {
-  const { leaves, filterLeaves } = useLeaveContext();
+  const { leaves, filterLeaves, getLeaves } = useLeaveContext();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search);
+
+  useEffect(() => {
+    getLeaves();
+  }, [getLeaves]);
 
   const filtered = useMemo(
     () => filterLeaves({ search: debouncedSearch }),

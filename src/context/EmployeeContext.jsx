@@ -7,35 +7,36 @@ export const EmployeeProvider = ({ children }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchEmployees = useCallback(async () => {
+  const fetchEmployees = useCallback(async (filters) => {
     setLoading(true);
     try {
-      const data = await employeeService.getEmployees(employees);
+      const data = await employeeService.getEmployees(filters);
+      setEmployees(data);
       return data;
     } finally {
       setLoading(false);
     }
-  }, [employees]);
+  }, []);
 
   const getNextEmployeeId = useCallback(async () => {
-    return employeeService.getNextEmployeeId(employees);
-  }, [employees]);
+    return employeeService.getNextEmployeeId();
+  }, []);
 
   const addEmployee = useCallback(async (employeeData) => {
     setLoading(true);
     try {
-      const newEmployee = await employeeService.addEmployee(employees, employeeData);
+      const newEmployee = await employeeService.addEmployee(employeeData);
       setEmployees((prev) => [...prev, newEmployee]);
       return newEmployee;
     } finally {
       setLoading(false);
     }
-  }, [employees]);
+  }, []);
 
   const updateEmployee = useCallback(async (id, employeeData) => {
     setLoading(true);
     try {
-      const updated = await employeeService.updateEmployee(employees, id, employeeData);
+      const updated = await employeeService.updateEmployee(id, employeeData);
       if (updated) {
         setEmployees((prev) => prev.map((e) => (e.id === id ? updated : e)));
       }
@@ -43,21 +44,21 @@ export const EmployeeProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [employees]);
+  }, []);
 
   const deleteEmployee = useCallback(async (id) => {
     setLoading(true);
     try {
-      const filtered = await employeeService.deleteEmployee(employees, id);
-      setEmployees(filtered);
+      await employeeService.deleteEmployee(id);
+      setEmployees((prev) => prev.filter((e) => e.id !== id));
     } finally {
       setLoading(false);
     }
-  }, [employees]);
+  }, []);
 
   const getEmployee = useCallback(async (id) => {
-    return employeeService.getEmployee(employees, id);
-  }, [employees]);
+    return employeeService.getEmployee(id);
+  }, []);
 
   const filterEmployees = useCallback((filters) => {
     return employeeService.filterEmployees(employees, filters);

@@ -1,39 +1,42 @@
-import { delay } from '../utils/formatters';
-import { loadFromStorage, saveToStorage, STORAGE_KEYS } from '../utils/storage';
-
-const DEFAULT_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123',
-};
-
-const getStoredPassword = () =>
-  loadFromStorage(STORAGE_KEYS.ADMIN_PASSWORD, DEFAULT_CREDENTIALS.password);
+import { api } from '../utils/api';
 
 export const authService = {
   async login(username, password) {
-    await delay(500);
-    const storedPassword = getStoredPassword();
-    if (username === DEFAULT_CREDENTIALS.username && password === storedPassword) {
-      return {
-        success: true,
-        user: { id: 1, username: 'admin', role: 'admin', name: 'Administrator' },
-      };
+    try {
+      const res = await api.post('/auth/login', { username, password });
+      if (res.success && res.token) {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        return { success: true, user: res.user };
+      }
+      return { success: false, message: res.message || 'Login failed' };
+    } catch (error) {
+      return { success: false, message: error.message || 'Invalid username or password' };
     }
-    return { success: false, message: 'Invalid username or password' };
   },
 
   async logout() {
-    await delay(200);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     return { success: true };
   },
 
   async changePassword(oldPassword, newPassword) {
-    await delay(300);
-    const storedPassword = getStoredPassword();
-    if (oldPassword !== storedPassword) {
-      return { success: false, message: 'Current password is incorrect' };
+    try {
+      const res = await api.post('/auth/change-password', { oldPassword, newPassword });
+      return res;
+    } catch (error) {
+      return { success: false, message: error.message || 'Failed to change password' };
     }
-    saveToStorage(STORAGE_KEYS.ADMIN_PASSWORD, newPassword);
-    return { success: true };
   },
+
+  getCurrentUser() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
+  }
 };

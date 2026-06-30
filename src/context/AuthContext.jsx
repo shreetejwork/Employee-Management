@@ -4,7 +4,7 @@ import { authService } from '../services/authService';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => authService.getCurrentUser());
   const [loading, setLoading] = useState(false);
 
   const login = useCallback(async (username, password) => {

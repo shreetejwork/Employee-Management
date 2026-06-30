@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IoArrowBack, IoCreateOutline } from 'react-icons/io5';
 import { useEmployeeContext } from '../../context/EmployeeContext';
+import { useLeaveContext } from '../../context/LeaveContext';
+import { leaveService } from '../../services/leaveService';
 import { formatCurrency, formatDate, formatDateLong } from '../../utils/formatters';
 import { ROUTES } from '../../constants/routes';
 import Card from '../../components/ui/Card';
@@ -9,6 +11,8 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Avatar from '../../components/ui/Avatar';
 import { DashboardSkeleton } from '../../components/ui/LoadingSkeleton';
+
+const statusVariant = { Pending: 'warning', Approved: 'success', Rejected: 'danger' };
 
 const InfoRow = ({ label, value }) => (
   <div className="py-2">
@@ -21,18 +25,48 @@ const EmployeeProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getEmployee } = useEmployeeContext();
+  const { getLeaves, leaves } = useLeaveContext();
   const [employee, setEmployee] = useState(null);
+  const [balances, setBalances] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
-      const data = await getEmployee(id);
-      setEmployee(data);
-      setLoading(false);
+      try {
+        const data = await getEmployee(id);
+        setEmployee(data);
+        if (data) {
+          const balData = await leaveService.getBalances(id);
+          setBalances(balData);
+          await getLeaves();
+        }
+      } catch (err) {
+        console.error('Error fetching employee profile details:', err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetch();
-  }, [id, getEmployee]);
+  }, [id, getEmployee, getLeaves]);
+
+  const employeeLeaves = useMemo(() => {
+    return leaves.filter(l => l.employee_id === id);
+  }, [leaves, id]);
+
+  const leaveSummary = useMemo(() => {
+    let total = 0;
+    let used = 0;
+    let remaining = 0;
+    balances.forEach(b => {
+      if (b.leaveType !== 'Unpaid') {
+        total += b.allowed;
+        used += b.used;
+        remaining += b.remaining;
+      }
+    });
+    return { total, used, remaining };
+  }, [balances]);
 
   if (loading) return <DashboardSkeleton />;
   if (!employee) {
@@ -126,6 +160,70 @@ const EmployeeProfile = () => {
             <InfoRow label="Contact Name" value={employee.emergencyContactName} />
             <InfoRow label="Contact Number" value={employee.emergencyContactNumber} />
           </div>
+        </Card>
+
+        <Card title="Leave Summary">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="p-3 bg-primary-light rounded-lg">
+              <p className="text-xs text-text-secondary">Total Allowed</p>
+              <p className="text-lg font-bold text-primary">{leaveSummary.total}</p>
+            </div>
+            <div className="p-3 bg-red-50 rounded-lg">
+              <p className="text-xs text-text-secondary">Used Leaves</p>
+              <p className="text-lg font-bold text-danger">{leaveSummary.used}</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="text-xs text-text-secondary">Remaining</p>
+              <p className="text-lg font-bold text-success">{leaveSummary.remaining}</p>
+            </div>
+          </div>
+          
+          <div className="mt-4 space-y-2">
+            <h4 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Breakdown</h4>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+              {balances.map(b => (
+                <div key={b.leaveType} className="flex justify-between py-1 border-b border-border/40">
+                  <span className="font-medium">{b.leaveType} Leave</span>
+                  <span className="text-text-secondary">
+                    {b.used} / {b.allowed === 999 ? '∞' : b.allowed} remaining
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Leave History">
+          {employeeLeaves.length === 0 ? (
+            <p className="text-sm text-text-secondary text-center py-6">No leaves taken yet.</p>
+          ) : (
+            <div className="overflow-x-auto max-h-[300px] text-xs">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border font-semibold text-text-secondary">
+                    <th className="py-2">Period</th>
+                    <th className="py-2">Type</th>
+                    <th className="py-2 text-center">Days</th>
+                    <th className="py-2 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employeeLeaves.map(leave => (
+                    <tr key={leave.id} className="border-b border-border/40">
+                      <td className="py-2">
+                        {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
+                      </td>
+                      <td className="py-2">{leave.leaveType}</td>
+                      <td className="py-2 text-center">{leave.days}</td>
+                      <td className="py-2 text-right">
+                        <Badge variant={statusVariant[leave.status]}>{leave.status}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Card>
 
         {employee.remarks && (
