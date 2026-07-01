@@ -1,25 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { dashboardService } from '../services/dashboardService';
-import { useEmployeeContext } from '../context/EmployeeContext';
-import { useSalaryContext } from '../context/SalaryContext';
-import { useLeaveContext } from '../context/LeaveContext';
 
 export const useDashboard = () => {
-  const { employees } = useEmployeeContext();
-  const { salarySlips } = useSalaryContext();
-  const { leaves } = useLeaveContext();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await dashboardService.getDashboardData();
+      setData(result);
+      return result;
+    } catch (err) {
+      setError(err.message || 'Failed to load dashboard data');
+      setData(null);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const result = await dashboardService.getDashboardData(employees, salarySlips, leaves);
-      setData(result);
-      setLoading(false);
-    };
     fetchData();
-  }, [employees, salarySlips, leaves]);
+  }, [fetchData]);
 
-  return { data, loading };
+  return { data, loading, error, refetch: fetchData };
 };

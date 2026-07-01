@@ -24,7 +24,7 @@ export const EmployeeModel = {
     }
 
     // Default sorting
-    query += ' ORDER BY createdAt DESC';
+    query += ' ORDER BY created_at DESC';
 
     const [rows] = await pool.query(query, params);
     
@@ -154,7 +154,7 @@ export const EmployeeModel = {
         basicPay = ?, da = ?, hra = ?, fixedAllowance = ?, medicalAllowance = ?, conveyance = ?, fba = ?, otherAllowances = ?,
         panNumber = ?, aadharNumber = ?, bankName = ?, accountNumber = ?, ifscCode = ?,
         emergencyContactName = ?, emergencyContactNumber = ?, photo = ?, remarks = ?,
-        updatedAt = CURRENT_TIMESTAMP
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
 
@@ -211,6 +211,8 @@ export const EmployeeModel = {
   parseFields(emp) {
     return {
       ...emp,
+      createdAt: emp.created_at,
+      updatedAt: emp.updated_at,
       basicPay: Number(emp.basicPay),
       da: Number(emp.da),
       hra: Number(emp.hra),

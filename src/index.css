@@ -46,6 +46,18 @@ body {
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -59,19 +71,25 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    max-width: none;
-    border: none;
-    border-radius: 0;
-    padding: 20px;
-    margin: 0;
+    width: 190mm;
+    max-width: 190mm;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .no-print {
+  .no-print,
+  .fixed.inset-0 {
     display: none !important;
   }
 
-  .print-only {
-    display: block !important;
+  .salary-slip-print-root {
+    overflow: visible !important;
   }
 }

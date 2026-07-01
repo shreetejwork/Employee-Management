@@ -12,8 +12,8 @@ import {
   IoChevronForward,
 } from "react-icons/io5";
 import { ROUTES } from "../../constants/routes";
-import { COMPANY } from "../../constants/company";
 import { useAuthContext } from "../../context/AuthContext";
+import { useCompanyContext } from "../../context/CompanyContext";
 import CompanyLogo from "../ui/CompanyLogo";
 
 const menuItems = [
@@ -27,6 +27,7 @@ const menuItems = [
 
 const Sidebar = ({ collapsed, onToggle }) => {
   const { logout } = useAuthContext();
+  const { companyInfo } = useCompanyContext();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -55,7 +56,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
               className="overflow-hidden"
             >
               <h1 className="text-white font-bold text-lg leading-tight">
-                {COMPANY.name}
+                {companyInfo.shortName || companyInfo.name}
               </h1>
             </motion.div>
           )}

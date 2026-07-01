@@ -21,8 +21,18 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import EmptyState from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 
+const computeTotalSalary = (row) =>
+  (Number(row.basicPay) || 0) +
+  (Number(row.da) || 0) +
+  (Number(row.hra) || 0) +
+  (Number(row.fixedAllowance) || 0) +
+  (Number(row.medicalAllowance) || 0) +
+  (Number(row.conveyance) || 0) +
+  (Number(row.fba) || 0) +
+  (Number(row.otherAllowances) || 0);
+
 const EmployeeList = () => {
-  const { employees, loading, filterEmployees, deleteEmployee, fetchEmployees } = useEmployeeContext();
+  const { employees, loading, error, filterEmployees, deleteEmployee, fetchEmployees } = useEmployeeContext();
   const { addToast } = useToastContext();
   const navigate = useNavigate();
 
@@ -34,12 +44,15 @@ const EmployeeList = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
 
   const debouncedSearch = useDebounce(search);
 
-  // Fetch employees on mount
   useEffect(() => {
-    fetchEmployees();
+    setFetchError(null);
+    fetchEmployees().catch((err) => {
+      setFetchError(err.message || 'Failed to load employees from database');
+    });
   }, [fetchEmployees]);
 
   const filtered = useMemo(() => {
@@ -49,7 +62,9 @@ const EmployeeList = () => {
 
   const { currentPage, totalPages, paginatedItems, goToPage, resetPage } = usePagination(filtered, 10);
 
-  useEffect(() => { resetPage(); }, [debouncedSearch, department, status, grade, resetPage]);
+  useEffect(() => {
+    resetPage();
+  }, [debouncedSearch, department, status, grade, resetPage]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -67,40 +82,58 @@ const EmployeeList = () => {
       await deleteEmployee(deleteId);
       addToast('Employee deleted successfully', 'success');
       setDeleteId(null);
-    } catch {
-      addToast('Failed to delete employee', 'error');
+    } catch (err) {
+      addToast(err.message || 'Failed to delete employee', 'error');
     } finally {
       setDeleting(false);
     }
   };
 
   const columns = [
-    { key: 'employeeId', label: 'Employee ID', sortable: true },
+    { key: 'employeeId', label: 'Employee ID', sortable: true, className: 'whitespace-nowrap' },
     {
       key: 'photo',
       label: 'Photo',
       render: (row) => <Avatar src={row.photo} name={row.fullName} size="sm" />,
     },
-    { key: 'fullName', label: 'Employee Name', sortable: true },
-    { key: 'department', label: 'Department', sortable: true },
-    { key: 'designation', label: 'Designation', sortable: true },
-    { key: 'grade', label: 'Grade', sortable: true },
+    { key: 'fullName', label: 'Employee Name', sortable: true, className: 'whitespace-nowrap' },
+    { key: 'department', label: 'Department', sortable: true, className: 'whitespace-nowrap' },
+    { key: 'designation', label: 'Designation', sortable: true, className: 'whitespace-nowrap' },
+    { key: 'email', label: 'Email', sortable: true, className: 'whitespace-nowrap' },
+    { key: 'mobile', label: 'Mobile', sortable: true, className: 'whitespace-nowrap' },
+    { key: 'panNumber', label: 'PAN', className: 'whitespace-nowrap' },
+    { key: 'aadharNumber', label: 'Aadhaar', className: 'whitespace-nowrap' },
+    {
+      key: 'currentAddress',
+      label: 'Address',
+      render: (row) => (
+        <span className="max-w-[200px] block truncate" title={row.currentAddress}>
+          {row.currentAddress}
+        </span>
+      ),
+    },
     {
       key: 'joiningDate',
       label: 'Joining Date',
       sortable: true,
+      className: 'whitespace-nowrap',
       render: (row) => formatDate(row.joiningDate),
     },
     {
-      key: 'basicPay',
-      label: 'Basic Pay',
-      sortable: true,
-      render: (row) => formatCurrency(row.basicPay),
+      key: 'salary',
+      label: 'Salary',
+      className: 'whitespace-nowrap',
+      render: (row) => formatCurrency(computeTotalSalary(row)),
     },
+    { key: 'bankName', label: 'Bank Name', className: 'whitespace-nowrap' },
+    { key: 'accountNumber', label: 'Account No.', className: 'whitespace-nowrap' },
+    { key: 'ifscCode', label: 'IFSC', className: 'whitespace-nowrap' },
+    { key: 'grade', label: 'Grade', sortable: true, className: 'whitespace-nowrap' },
     {
       key: 'status',
       label: 'Status',
       sortable: true,
+      className: 'whitespace-nowrap',
       render: (row) => (
         <Badge variant={row.status === 'Active' ? 'success' : 'secondary'}>{row.status}</Badge>
       ),
@@ -108,6 +141,7 @@ const EmployeeList = () => {
     {
       key: 'actions',
       label: 'Actions',
+      className: 'whitespace-nowrap',
       render: (row) => (
         <div className="flex items-center gap-1">
           <button
@@ -140,11 +174,20 @@ const EmployeeList = () => {
 
   return (
     <div className="space-y-4">
+      {(fetchError || error) && (
+        <div className="rounded-lg border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger flex items-center justify-between gap-3">
+          <span>{fetchError || error}</span>
+          <Button size="sm" variant="outline" onClick={() => fetchEmployees()}>
+            Retry
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-3">
         <SearchInput
           value={search}
           onChange={setSearch}
-          placeholder="Search by name, ID, email..."
+          placeholder="Search by name, ID, email, department..."
           className="flex-1"
         />
         <Select
@@ -174,7 +217,7 @@ const EmployeeList = () => {
       </div>
 
       <Card noPadding>
-        {employees.length === 0 ? (
+        {employees.length === 0 && !loading ? (
           <EmptyState
             title="No Employees Yet"
             description="Start by adding your first employee to the system."

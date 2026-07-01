@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSalaryContext } from '../../context/SalaryContext';
+import { useEmployeeContext } from '../../context/EmployeeContext';
 import { useToastContext } from '../../context/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePagination } from '../../hooks/usePagination';
@@ -10,20 +11,27 @@ import SearchInput from '../../components/ui/SearchInput';
 import Pagination from '../../components/ui/Pagination';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
-import Button from '../../components/ui/Button';
 import SalarySlipPreview from './SalarySlipPreview';
-import { downloadSalarySlipPdf } from '../../utils/pdfDownload';
-import { useEmployeeContext } from '../../context/EmployeeContext';
-import { IoEyeOutline, IoPrintOutline, IoDownloadOutline } from 'react-icons/io5';
+import SalarySlipActions from '../../components/salary/SalarySlipActions';
+import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
+import { IoEyeOutline } from 'react-icons/io5';
 
 const SalaryHistory = () => {
-  const { salarySlips } = useSalaryContext();
-  const { employees } = useEmployeeContext();
+  const { salarySlips, loading, error, fetchSalarySlips } = useSalaryContext();
+  const { employees, fetchEmployees } = useEmployeeContext();
   const { addToast } = useToastContext();
   const [search, setSearch] = useState('');
   const [viewSlip, setViewSlip] = useState(null);
-  const [downloading, setDownloading] = useState(false);
   const debouncedSearch = useDebounce(search);
+
+  useEffect(() => {
+    fetchSalarySlips().catch(() => {
+      addToast('Failed to load salary history from database', 'error');
+    });
+    fetchEmployees().catch(() => {
+      addToast('Failed to load employee records', 'error');
+    });
+  }, [fetchSalarySlips, fetchEmployees, addToast]);
 
   const filtered = useMemo(() => {
     if (!debouncedSearch) return salarySlips;
@@ -46,22 +54,6 @@ const SalaryHistory = () => {
   const viewEmployee = viewSlip
     ? employees.find((e) => e.employeeId === viewSlip.employeeId)
     : null;
-
-  const handleDownloadPdf = async () => {
-    if (!viewSlip) return;
-    setDownloading(true);
-    try {
-      await downloadSalarySlipPdf(
-        'salary-slip-print',
-        `salary-slip-${viewSlip.employeeId}-${viewSlip.slipId}.pdf`
-      );
-      addToast('PDF downloaded successfully', 'success');
-    } catch {
-      addToast('Failed to download PDF', 'error');
-    } finally {
-      setDownloading(false);
-    }
-  };
 
   const columns = [
     { key: 'slipId', label: 'Slip ID' },
@@ -95,6 +87,7 @@ const SalaryHistory = () => {
         <button
           onClick={() => setViewSlip(row)}
           className="p-1.5 rounded-lg hover:bg-primary-light text-primary cursor-pointer"
+          title="View"
         >
           <IoEyeOutline size={18} />
         </button>
@@ -102,8 +95,16 @@ const SalaryHistory = () => {
     },
   ];
 
+  if (loading && salarySlips.length === 0) return <TableSkeleton />;
+
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="rounded-lg border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
       <SearchInput
         value={search}
         onChange={setSearch}
@@ -113,10 +114,7 @@ const SalaryHistory = () => {
 
       <Card noPadding>
         {salarySlips.length === 0 ? (
-          <EmptyState
-            title="No Salary Slips"
-            description="Generated salary slips will appear here."
-          />
+          <EmptyState title="No Salary Slips" description="Generated salary slips will appear here." />
         ) : (
           <>
             <Table columns={columns} data={paginatedItems} />
@@ -127,17 +125,17 @@ const SalaryHistory = () => {
 
       <Modal isOpen={!!viewSlip} onClose={() => setViewSlip(null)} title="Salary Slip" size="lg">
         {viewSlip && viewEmployee && (
-          <>
+          <div className="salary-slip-print-root">
             <SalarySlipPreview slip={viewSlip} employee={viewEmployee} />
-            <div className="flex justify-end gap-3 mt-6 no-print">
-              <Button variant="outline" icon={<IoDownloadOutline />} loading={downloading} onClick={handleDownloadPdf}>
-                Download PDF
-              </Button>
-              <Button variant="outline" icon={<IoPrintOutline />} onClick={() => window.print()}>
-                Print
-              </Button>
-            </div>
-          </>
+            <SalarySlipActions
+              employee={viewEmployee}
+              slip={viewSlip}
+              onClose={() => setViewSlip(null)}
+            />
+          </div>
+        )}
+        {viewSlip && !viewEmployee && (
+          <p className="text-sm text-danger">Employee record not found in database.</p>
         )}
       </Modal>
     </div>

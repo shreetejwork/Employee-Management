@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import { useCompanyContext } from '../../context/CompanyContext';
@@ -19,6 +19,7 @@ const SettingsPage = () => {
   const {
     register: registerAddress,
     handleSubmit: handleAddressSubmit,
+    reset: resetAddressForm,
     formState: { errors: addressErrors },
   } = useForm({
     defaultValues: {
@@ -26,6 +27,13 @@ const SettingsPage = () => {
       manufacturingUnit: addresses.manufacturingUnit,
     },
   });
+
+  useEffect(() => {
+    resetAddressForm({
+      registeredOffice: addresses.registeredOffice,
+      manufacturingUnit: addresses.manufacturingUnit,
+    });
+  }, [addresses.registeredOffice, addresses.manufacturingUnit, resetAddressForm]);
 
   const {
     register: registerPassword,

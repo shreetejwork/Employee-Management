@@ -6,13 +6,18 @@ const EmployeeContext = createContext(null);
 export const EmployeeProvider = ({ children }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchEmployees = useCallback(async (filters) => {
     setLoading(true);
+    setError(null);
     try {
       const data = await employeeService.getEmployees(filters);
       setEmployees(data);
       return data;
+    } catch (err) {
+      setError(err.message || 'Failed to fetch employees');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -24,23 +29,31 @@ export const EmployeeProvider = ({ children }) => {
 
   const addEmployee = useCallback(async (employeeData) => {
     setLoading(true);
+    setError(null);
     try {
       const newEmployee = await employeeService.addEmployee(employeeData);
-      setEmployees((prev) => [...prev, newEmployee]);
+      await fetchEmployees();
       return newEmployee;
+    } catch (err) {
+      setError(err.message || 'Failed to add employee');
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchEmployees]);
 
   const updateEmployee = useCallback(async (id, employeeData) => {
     setLoading(true);
+    setError(null);
     try {
       const updated = await employeeService.updateEmployee(id, employeeData);
       if (updated) {
         setEmployees((prev) => prev.map((e) => (e.id === id ? updated : e)));
       }
       return updated;
+    } catch (err) {
+      setError(err.message || 'Failed to update employee');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -48,9 +61,13 @@ export const EmployeeProvider = ({ children }) => {
 
   const deleteEmployee = useCallback(async (id) => {
     setLoading(true);
+    setError(null);
     try {
       await employeeService.deleteEmployee(id);
       setEmployees((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      setError(err.message || 'Failed to delete employee');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -73,6 +90,7 @@ export const EmployeeProvider = ({ children }) => {
       value={{
         employees,
         loading,
+        error,
         fetchEmployees,
         getNextEmployeeId,
         addEmployee,

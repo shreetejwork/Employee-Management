@@ -6,13 +6,18 @@ const LeaveContext = createContext(null);
 export const LeaveProvider = ({ children }) => {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const getLeaves = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await leaveService.getLeaves();
       setLeaves(data);
       return data;
+    } catch (err) {
+      setError(err.message || 'Failed to fetch leave records');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -20,10 +25,15 @@ export const LeaveProvider = ({ children }) => {
 
   const addLeave = useCallback(async (leaveData, employee) => {
     setLoading(true);
+    setError(null);
     try {
       const newLeave = await leaveService.addLeave(leaveData, employee);
-      setLeaves((prev) => [newLeave, ...prev]);
+      const data = await leaveService.getLeaves();
+      setLeaves(data);
       return newLeave;
+    } catch (err) {
+      setError(err.message || 'Failed to add leave');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -31,11 +41,14 @@ export const LeaveProvider = ({ children }) => {
 
   const approveLeave = useCallback(async (id) => {
     setLoading(true);
+    setError(null);
     try {
       await leaveService.approveLeave(id);
-      // Reload leaves list from DB to get updated statuses and balances
       const data = await leaveService.getLeaves();
       setLeaves(data);
+    } catch (err) {
+      setError(err.message || 'Failed to approve leave');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -43,11 +56,14 @@ export const LeaveProvider = ({ children }) => {
 
   const rejectLeave = useCallback(async (id) => {
     setLoading(true);
+    setError(null);
     try {
       await leaveService.rejectLeave(id);
-      // Reload leaves list from DB to get updated statuses and balances
       const data = await leaveService.getLeaves();
       setLeaves(data);
+    } catch (err) {
+      setError(err.message || 'Failed to reject leave');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -59,7 +75,7 @@ export const LeaveProvider = ({ children }) => {
 
   return (
     <LeaveContext.Provider
-      value={{ leaves, loading, getLeaves, addLeave, approveLeave, rejectLeave, filterLeaves }}
+      value={{ leaves, loading, error, getLeaves, addLeave, approveLeave, rejectLeave, filterLeaves }}
     >
       {children}
     </LeaveContext.Provider>

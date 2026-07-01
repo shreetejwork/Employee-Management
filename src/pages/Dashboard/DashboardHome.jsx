@@ -4,9 +4,10 @@ import {
   IoPeopleOutline,
   IoWalletOutline,
   IoCalendarOutline,
-  IoCheckmarkCircleOutline,
   IoPersonAddOutline,
   IoDocumentTextOutline,
+  IoCheckmarkCircleOutline,
+  IoCloseCircleOutline,
 } from "react-icons/io5";
 import { useDashboard } from "../../hooks/useDashboard";
 import { ROUTES } from "../../constants/routes";
@@ -20,10 +21,25 @@ import Avatar from "../../components/ui/Avatar";
 import { DashboardSkeleton } from "../../components/ui/LoadingSkeleton";
 
 const DashboardHome = () => {
-  const { data, loading } = useDashboard();
+  const { data, loading, error, refetch } = useDashboard();
   const navigate = useNavigate();
 
-  if (loading || !data) return <DashboardSkeleton />;
+  if (loading && !data) return <DashboardSkeleton />;
+
+  if (error && !data) {
+    return (
+      <div className="rounded-xl border border-danger/30 bg-red-50 p-6 text-center">
+        <p className="text-danger font-medium">{error}</p>
+        <Button className="mt-4" onClick={refetch}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const company = data.companyInfo;
 
   const employeeColumns = [
     { key: "employeeId", label: "ID" },
@@ -71,11 +87,7 @@ const DashboardHome = () => {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text">Dashboard</h1>
         <p className="text-text-secondary text-sm mt-1">
@@ -83,42 +95,56 @@ const DashboardHome = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Employees"
-          value={data.totalEmployees}
-          icon={<IoPeopleOutline size={22} />}
-          color="primary"
-        />
-        <StatCard
-          title="Salary Slips Generated"
-          value={data.salarySlipsGenerated}
-          icon={<IoWalletOutline size={22} />}
-          color="success"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <StatCard title="Total Employees" value={data.totalEmployees} icon={<IoPeopleOutline size={22} />} color="primary" />
+        <StatCard title="Active Employees" value={data.activeEmployees} icon={<IoCheckmarkCircleOutline size={22} />} color="success" />
+        <StatCard title="Inactive Employees" value={data.inactiveEmployees} icon={<IoCloseCircleOutline size={22} />} color="secondary" />
+        <StatCard title="Salary Slips Generated" value={data.salarySlipsGenerated} icon={<IoWalletOutline size={22} />} color="success" />
+        <StatCard title="Joined This Month" value={data.employeesJoinedThisMonth} icon={<IoPersonAddOutline size={22} />} color="primary" />
+        <StatCard title="Pending Leaves" value={data.pendingLeaves} icon={<IoCalendarOutline size={22} />} color="warning" />
       </div>
+
+      {company && (
+        <Card title="Company Information">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-text-secondary">Company Name</p>
+              <p className="font-medium">{company.name}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary">Email</p>
+              <p className="font-medium">{company.email || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary">Website</p>
+              <p className="font-medium">{company.website || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary">Phone</p>
+              <p className="font-medium">{company.phones || '-'}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs text-text-secondary">Registered Office</p>
+              <p className="font-medium">{company.registeredOffice || '-'}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-xs text-text-secondary">Manufacturing Unit</p>
+              <p className="font-medium">{company.manufacturingUnit || '-'}</p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card title="Quick Actions" noPadding>
         <div className="flex flex-wrap gap-3 p-5">
-          <Button
-            icon={<IoPersonAddOutline />}
-            onClick={() => navigate(ROUTES.EMPLOYEE_ADD)}
-          >
+          <Button icon={<IoPersonAddOutline />} onClick={() => navigate(ROUTES.EMPLOYEE_ADD)}>
             Add Employee
           </Button>
-          <Button
-            variant="outline"
-            icon={<IoDocumentTextOutline />}
-            onClick={() => navigate(ROUTES.SALARY_GENERATE)}
-          >
+          <Button variant="outline" icon={<IoDocumentTextOutline />} onClick={() => navigate(ROUTES.SALARY_GENERATE)}>
             Generate Salary Slip
           </Button>
-          <Button
-            variant="outline"
-            icon={<IoCalendarOutline />}
-            onClick={() => navigate(ROUTES.LEAVES_REQUESTS)}
-          >
-            Leave Requests
+          <Button variant="outline" icon={<IoCalendarOutline />} onClick={() => navigate(ROUTES.LEAVES)}>
+            Leave Management
           </Button>
         </div>
       </Card>
@@ -127,41 +153,25 @@ const DashboardHome = () => {
         <Card
           title="Recent Employees"
           action={
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(ROUTES.EMPLOYEES)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.EMPLOYEES)}>
               View All
             </Button>
           }
           noPadding
         >
-          <Table
-            columns={employeeColumns}
-            data={data.recentEmployees}
-            emptyMessage="No employees added yet"
-          />
+          <Table columns={employeeColumns} data={data.recentEmployees || []} emptyMessage="No employees added yet" />
         </Card>
 
         <Card
           title="Recent Salary Slips"
           action={
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(ROUTES.SALARY_HISTORY)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.SALARY_HISTORY)}>
               View All
             </Button>
           }
           noPadding
         >
-          <Table
-            columns={salaryColumns}
-            data={data.recentSalarySlips}
-            emptyMessage="No salary slips generated yet"
-          />
+          <Table columns={salaryColumns} data={data.recentSalarySlips || []} emptyMessage="No salary slips generated yet" />
         </Card>
       </div>
     </motion.div>

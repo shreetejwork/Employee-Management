@@ -5,34 +5,55 @@ import { companyService } from '../services/companyService';
 const CompanyContext = createContext(null);
 
 export const CompanyProvider = ({ children }) => {
-  const [addresses, setAddresses] = useState(() => companyService.getStoredAddresses());
+  const [companyInfo, setCompanyInfo] = useState({
+    ...COMPANY,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load from DB on mount
-  useEffect(() => {
-    companyService.getCompanyInfo().then((info) => {
-      if (info) {
-        setAddresses({
-          registeredOffice: info.registeredOffice,
-          manufacturingUnit: info.manufacturingUnit,
-        });
-      }
-    });
+  const loadCompanyInfo = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const info = await companyService.getCompanyInfo();
+      setCompanyInfo(info);
+      return info;
+    } catch (err) {
+      setError(err.message || 'Failed to load company information');
+      return null;
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadCompanyInfo();
+  }, [loadCompanyInfo]);
 
   const updateAddresses = useCallback(async (registeredOffice, manufacturingUnit) => {
     const updated = await companyService.updateAddresses(registeredOffice, manufacturingUnit);
-    setAddresses(updated);
+    setCompanyInfo((prev) => ({
+      ...prev,
+      registeredOffice: updated.registeredOffice,
+      manufacturingUnit: updated.manufacturingUnit,
+    }));
     return updated;
   }, []);
 
-  const companyInfo = {
-    ...COMPANY,
-    registeredOffice: addresses.registeredOffice,
-    manufacturingUnit: addresses.manufacturingUnit,
-  };
-
   return (
-    <CompanyContext.Provider value={{ companyInfo, addresses, updateAddresses }}>
+    <CompanyContext.Provider
+      value={{
+        companyInfo,
+        addresses: {
+          registeredOffice: companyInfo.registeredOffice,
+          manufacturingUnit: companyInfo.manufacturingUnit,
+        },
+        loading,
+        error,
+        loadCompanyInfo,
+        updateAddresses,
+      }}
+    >
       {children}
     </CompanyContext.Provider>
   );

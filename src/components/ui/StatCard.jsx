@@ -6,6 +6,7 @@ const StatCard = ({ title, value, icon, color = 'primary', trend }) => {
     success: 'bg-green-50 text-success',
     warning: 'bg-amber-50 text-warning',
     danger: 'bg-red-50 text-danger',
+    secondary: 'bg-card text-text-secondary',
   };
 
   return (

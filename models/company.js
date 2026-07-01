@@ -18,7 +18,7 @@ export const CompanyModel = {
     } else {
       const id = rows[0].id;
       const [result] = await pool.query(
-        'UPDATE company_information SET registeredOffice = ?, manufacturingUnit = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?',
+        'UPDATE company_information SET registeredOffice = ?, manufacturingUnit = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [registeredOffice, manufacturingUnit, id]
       );
       return result.affectedRows > 0;

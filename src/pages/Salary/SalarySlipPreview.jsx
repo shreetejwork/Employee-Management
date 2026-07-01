@@ -49,7 +49,8 @@ const SalarySlipPreview = ({ slip, employee }) => {
   return (
     <div
       id="salary-slip-print"
-      className="bg-white border border-border rounded-xl p-8 max-w-3xl mx-auto text-text"
+      className="bg-white border border-border rounded-xl p-8 mx-auto text-text"
+      style={{ width: '794px', maxWidth: '100%' }}
     >
       <CompanyLetterhead />
 

@@ -6,22 +6,37 @@ const SalaryContext = createContext(null);
 export const SalaryProvider = ({ children }) => {
   const [salarySlips, setSalarySlips] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const getSalaryHistory = useCallback(async () => {
+  const fetchSalarySlips = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      return await salaryService.getSalaryHistory(salarySlips);
+      const data = await salaryService.getSalaryHistory();
+      setSalarySlips(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Failed to fetch salary slips');
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, [salarySlips]);
+  }, []);
+
+  const getSalaryHistory = useCallback(async () => {
+    return fetchSalarySlips();
+  }, [fetchSalarySlips]);
 
   const generateSalarySlip = useCallback(async (slipData, employee) => {
     setLoading(true);
+    setError(null);
     try {
-      const newSlip = await salaryService.generateSalarySlip(salarySlips, slipData, employee);
-      setSalarySlips((prev) => [...prev, newSlip]);
+      const newSlip = await salaryService.generateSalarySlip(slipData, employee, salarySlips);
+      setSalarySlips((prev) => [newSlip, ...prev]);
       return newSlip;
+    } catch (err) {
+      setError(err.message || 'Failed to generate salary slip');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -33,7 +48,15 @@ export const SalaryProvider = ({ children }) => {
 
   return (
     <SalaryContext.Provider
-      value={{ salarySlips, loading, getSalaryHistory, generateSalarySlip, calculatePreview }}
+      value={{
+        salarySlips,
+        loading,
+        error,
+        fetchSalarySlips,
+        getSalaryHistory,
+        generateSalarySlip,
+        calculatePreview,
+      }}
     >
       {children}
     </SalaryContext.Provider>

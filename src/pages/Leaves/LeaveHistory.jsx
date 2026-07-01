@@ -9,16 +9,17 @@ import SearchInput from '../../components/ui/SearchInput';
 import Badge from '../../components/ui/Badge';
 import Pagination from '../../components/ui/Pagination';
 import EmptyState from '../../components/ui/EmptyState';
+import { TableSkeleton } from '../../components/ui/LoadingSkeleton';
 
 const statusVariant = { Pending: 'warning', Approved: 'success', Rejected: 'danger' };
 
 const LeaveHistory = () => {
-  const { leaves, filterLeaves, getLeaves } = useLeaveContext();
+  const { leaves, loading, error, filterLeaves, getLeaves } = useLeaveContext();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search);
 
   useEffect(() => {
-    getLeaves();
+    getLeaves().catch(() => {});
   }, [getLeaves]);
 
   const filtered = useMemo(
@@ -57,10 +58,18 @@ const LeaveHistory = () => {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <div className="rounded-lg border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+          {error}
+        </div>
+      )}
+
       <SearchInput value={search} onChange={setSearch} placeholder="Search leave history..." className="max-w-md" />
 
       <Card noPadding>
-        {leaves.length === 0 ? (
+        {loading && leaves.length === 0 ? (
+          <div className="p-6"><TableSkeleton rows={6} cols={6} /></div>
+        ) : leaves.length === 0 ? (
           <EmptyState title="No Leave History" description="Leave records will appear here once created." />
         ) : (
           <>

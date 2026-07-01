@@ -64,16 +64,19 @@ export const salaryController = {
       const html = `
         <p>Dear ${employeeName},</p>
         <p>Please find attached your salary slip for ${monthName} ${year}.</p>
-        <p>Regards,<br/>${companyName || 'WinRender Systems LLP.'}</p>
+        <p>Kindly review the attached salary slip.</p>
+        <p>If you have any questions, please contact the HR department.</p>
+        <p>Regards,<br/>${companyName || 'HR Department'}</p>
       `;
 
+      const safeName = (employeeName || 'Employee').replace(/\s+/g, '_');
       const result = await sendEmailWithAttachment({
         to: employeeEmail,
         subject,
         html,
         attachments: [
           {
-            filename: `salary-slip-${employeeName.replace(/\s+/g, '-')}-${monthName}-${year}.pdf`,
+            filename: `${safeName}_${monthName}_${year}_SalarySlip.pdf`,
             content: buffer,
             contentType: 'application/pdf'
           }

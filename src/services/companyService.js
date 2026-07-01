@@ -1,31 +1,43 @@
 import { api } from '../utils/api';
 import { COMPANY } from '../constants/company';
 
-const defaultAddresses = {
-  registeredOffice: COMPANY.registeredOffice,
-  manufacturingUnit: COMPANY.manufacturingUnit,
+const parsePhones = (phones) => {
+  if (Array.isArray(phones)) return phones;
+  if (typeof phones === 'string' && phones.trim()) {
+    return phones.split(',').map((p) => p.trim());
+  }
+  return COMPANY.phones;
 };
 
-export const companyService = {
-  getStoredAddresses() {
-    // For synchronous initialization fallback
-    return defaultAddresses;
-  },
+const withAssets = (info = {}) => ({
+  name: info.name || COMPANY.name,
+  shortName: info.shortName || COMPANY.shortName,
+  tagline: info.tagline || COMPANY.tagline,
+  website: info.website || COMPANY.website,
+  email: info.email || COMPANY.email,
+  phones: parsePhones(info.phones),
+  registeredOffice: info.registeredOffice || COMPANY.registeredOffice,
+  manufacturingUnit: info.manufacturingUnit || COMPANY.manufacturingUnit,
+  logoIcon: COMPANY.logoIcon,
+  logoFull: COMPANY.logoFull,
+  appTitle: COMPANY.appTitle,
+  appSubtitle: COMPANY.appSubtitle,
+});
 
+export const companyService = {
   async getCompanyInfo() {
-    try {
-      const res = await api.get('/company');
-      if (res.success && res.data) {
-        return { ...COMPANY, ...res.data };
-      }
-      return { ...COMPANY, ...defaultAddresses };
-    } catch {
-      return { ...COMPANY, ...defaultAddresses };
+    const res = await api.get('/company');
+    if (res.success && res.data) {
+      return withAssets(res.data);
     }
+    return withAssets();
   },
 
   async updateAddresses(registeredOffice, manufacturingUnit) {
     const res = await api.put('/company/addresses', { registeredOffice, manufacturingUnit });
-    return res.data;
+    return {
+      registeredOffice: res.data.registeredOffice,
+      manufacturingUnit: res.data.manufacturingUnit,
+    };
   },
 };

@@ -1,5 +1,10 @@
 import pool from '../config/db.js';
 
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 export const SalaryModel = {
   async getHistory() {
     const query = `
@@ -9,7 +14,10 @@ export const SalaryModel = {
       ORDER BY ss.generatedAt DESC
     `;
     const [rows] = await pool.query(query);
-    return rows.map(r => this.parseFields(r));
+    return rows.map((r) => ({
+      ...this.parseFields(r),
+      salaryMonthName: MONTHS[r.salaryMonth],
+    }));
   },
 
   async getNextSlipId() {
@@ -193,7 +201,18 @@ export const SalaryModel = {
     ];
 
     await pool.query(insertQuery, values);
-    return { ...slipData, id, slipId };
+
+    const [created] = await pool.query(`
+      SELECT ss.*, emp.fullName as employeeName, emp.department, emp.employeeId, emp.designation, emp.grade
+      FROM salary_slips ss
+      JOIN employees emp ON ss.employee_id = emp.id
+      WHERE ss.id = ?
+    `, [id]);
+
+    return {
+      ...this.parseFields(created[0]),
+      salaryMonthName: MONTHS[parseInt(slipData.salaryMonth, 10)],
+    };
   },
 
   parseFields(ss) {
